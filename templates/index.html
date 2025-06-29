@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>MOSFET Datasheet Search</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; }
+    h1 { color: #333; }
+    label { display: block; margin-top: 20px; }
+    input[type="file"], input[type="text"], button {
+      margin-top: 10px;
+    }
+    #results { margin-top: 30px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+    th, td { border: 1px solid #ddd; padding: 8px; }
+    th { background: #f2f2f2; }
+    pre { background: #f8f8f8; padding: 10px; }
+  </style>
+</head>
+<body>
+  <h1>MOSFET Datasheet Search</h1>
+
+  <h2>1️⃣ Upload CSV</h2>
+  <form id="uploadForm">
+    <input type="file" id="csvFile" name="file" accept=".csv" required />
+    <button type="submit">Upload</button>
+    <div id="uploadStatus"></div>
+  </form>
+
+  <h2>2️⃣ Query</h2>
+  <form id="queryForm">
+    <input type="text" id="queryInput" placeholder="e.g. MOSFET with Vdss > 30V and Rds < 50 mOhm" required />
+    <button type="submit">Search</button>
+  </form>
+
+  <div id="results">
+    <h3>Structured Data</h3>
+    <div id="tableContainer"></div>
+
+    <h3>LLM Analysis</h3>
+    <pre id="llmResponse"></pre>
+  </div>
+
+  <script>
+    const uploadForm = document.getElementById('uploadForm');
+    const uploadStatus = document.getElementById('uploadStatus');
+    const queryForm = document.getElementById('queryForm');
+    const queryInput = document.getElementById('queryInput');
+    const tableContainer = document.getElementById('tableContainer');
+    const llmResponse = document.getElementById('llmResponse');
+
+    uploadForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fileInput = document.getElementById('csvFile');
+      const file = fileInput.files[0];
+      const formData = new FormData();
+      formData.append('file', file);
+
+      uploadStatus.textContent = "Uploading...";
+      const response = await fetch('/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      const result = await response.json();
+      uploadStatus.textContent = JSON.stringify(result);
+    });
+
+    queryForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const userQuery = queryInput.value;
+
+      const response = await fetch('/query', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ query: userQuery })
+      });
+
+      const result = await response.json();
+
+      if (result.structured_data) {
+        renderTable(result.structured_data);
+        llmResponse.textContent = result.analysis;
+      } else {
+        tableContainer.innerHTML = '';
+        llmResponse.textContent = result.message || 'No results.';
+      }
+    });
+
+    function renderTable(data) {
+      if (!data.length) {
+        tableContainer.innerHTML = '<p>No data to display.</p>';
+        return;
+      }
+
+      const columns = Object.keys(data[0]);
+      let html = '<table><thead><tr>';
+      columns.forEach(col => {
+        html += `<th>${col}</th>`;
+      });
+      html += '</tr></thead><tbody>';
+
+      data.forEach(row => {
+        html += '<tr>';
+        columns.forEach(col => {
+          html += `<td>${row[col]}</td>`;
+        });
+        html += '</tr>';
+      });
+
+      html += '</tbody></table>';
+      tableContainer.innerHTML = html;
+    }
+  </script>
+</body>
+</html>
