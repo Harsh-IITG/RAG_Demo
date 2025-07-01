@@ -15,14 +15,14 @@ from flask import render_template
 app = Flask(__name__)
 
 # Gemini setup
-genai.configure(api_key="AIzaSyBAokGJ91nfl-UG5cGm3c3tzvwrdGBxYqc")
+genai.configure(api_key="GEMINI_API_KEY")
 model_llm = genai.GenerativeModel("gemini-1.5-flash")
 
 # Embedder
 embedder = SentenceTransformer("intfloat/e5-base-v2")
 
 # Pinecone client
-pc = Pinecone(api_key="pcsk_4QBiy4_8zZzjsRknsPZBupzZABdbGsE2EFXLiSkFnPhKz9P9Vt8Uzd8V39znyGkmFDksfT")
+pc = Pinecone(api_key="PINECONE_API_KEY")
 index_name = "mosfet-datasheet-2"
 
 # Create index if not exists
